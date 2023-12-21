@@ -2,8 +2,8 @@ package database
 
 import (
 	"fmt"
-	"os"
 
+	"github.com/OmidRasouli/amuse-park/statics"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -25,13 +25,7 @@ func Initialize(postgresModels ...interface{}) {
 }
 
 func config() string {
-	host := "postgres"
-	user := os.Getenv("POSTGRES_USER")
-	password := os.Getenv("POSTGRES_PASSWORD")
-	dbname := os.Getenv("POSTGRES_DB")
-	port := os.Getenv("POSTGRES_PORT")
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tehran",
-		host, user, password, dbname, port)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
+		statics.DBHost, statics.DBUser, statics.DBPassword, statics.DBName, statics.DBPort, statics.DBSSLMode, statics.DBTimeZone)
 	return dsn
 }
