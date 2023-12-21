@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/OmidRasouli/amuse-park/database"
 	"github.com/OmidRasouli/amuse-park/server"
 	"github.com/OmidRasouli/amuse-park/statics"
 	"github.com/gin-gonic/gin"
@@ -10,6 +11,9 @@ import (
 
 func main() {
 	statics.Read()
+
+	database.Initialize()
+
 	fmt.Println("Hello there...")
 
 	router := gin.Default()
