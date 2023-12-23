@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/OmidRasouli/amuse-park/database"
+	"github.com/OmidRasouli/amuse-park/models"
 	"github.com/OmidRasouli/amuse-park/server"
 	"github.com/OmidRasouli/amuse-park/statics"
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,7 @@ import (
 func main() {
 	statics.Read()
 
-	database.Initialize()
+	database.Initialize(&models.Account{}, &models.Authentication{}, &models.Profile{})
 
 	fmt.Println("Hello there...")
 
