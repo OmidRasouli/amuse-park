@@ -17,14 +17,16 @@ func createAccount(userAccount UserAccount) (*models.Account, error) {
 	}
 
 	account := models.Account{
-		UserID:   userID,
-		Username: userAccount.Username,
-		Role:     "player",
+		UserID:    userID,
+		Username:  userAccount.Username,
+		Role:      "player",
+		ProfileID: userID,
 		Profile: &models.Profile{
+			ID:          userID,
 			Level:       1,
 			DisplayName: userAccount.Username,
 			CreatedDate: time.Now(),
-			TimeZone:    *time.UTC,
+			TimeZone:    time.UTC.String(),
 			State:       "active",
 			Email:       userAccount.Email,
 		},

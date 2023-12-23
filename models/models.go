@@ -7,22 +7,24 @@ import (
 )
 
 type Account struct {
-	UserID   uuid.UUID `gorm:"primaryKey;<-:create" json:"uuid"`
-	Username string    `json:"username"`
-	Role     string    `json:"role"`
-	Profile  *Profile  `json:"profile"`
-	DeviceID string    `json:"device_id"`
+	UserID    uuid.UUID `gorm:"primaryKey;<-:create" json:"uuid"`
+	Username  string    `json:"username"`
+	Role      string    `json:"role"`
+	ProfileID uuid.UUID `json:"profile_id"`
+	Profile   *Profile  `gorm:"foreignKey:profile_id" json:"profile"`
+	DeviceID  string    `json:"device_id"`
 }
 
 type Profile struct {
-	Level       uint          `json:"level"`
-	DisplayName string        `json:"display_name"`
-	AvatarURL   *string       `json:"avatar_url"`
-	Location    *string       `json:"location"`
-	CreatedDate time.Time     `gorm:"<-:create" json:"created_date"`
-	TimeZone    time.Location `json:"timezone"`
-	State       string        `json:"state"`
-	Email       string        `json:"email"`
+	ID          uuid.UUID `gorm:"primaryKey;<-:create" json:"profile_id"`
+	Level       uint      `json:"level"`
+	DisplayName string    `json:"display_name"`
+	AvatarURL   *string   `json:"avatar_url"`
+	Location    *string   `json:"location"`
+	CreatedDate time.Time `gorm:"<-:create" json:"created_date"`
+	TimeZone    string    `json:"timezone"`
+	State       string    `json:"state"`
+	Email       string    `json:"email"`
 }
 
 type Authentication struct {
