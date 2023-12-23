@@ -11,6 +11,7 @@ type Account struct {
 	Username string    `json:"username"`
 	Role     string    `json:"role"`
 	Profile  *Profile  `json:"profile"`
+	DeviceID string    `json:"device_id"`
 }
 
 type Profile struct {
@@ -21,12 +22,13 @@ type Profile struct {
 	CreatedDate time.Time     `gorm:"<-:create" json:"created_date"`
 	TimeZone    time.Location `json:"timezone"`
 	State       string        `json:"state"`
+	Email       string        `json:"email"`
 }
 
 type Authentication struct {
-	Email    string  `gorm:"unique" json:"email"`
-	Password *string `json:"password"`
-	DeviceID string  `json:"device_id"`
+	Username string `gorm:"unique" json:"username"`
+	Password string `json:"password"`
+	DeviceID string `json:"device_id"`
 }
 
 // type FriendList struct {
