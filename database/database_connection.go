@@ -3,25 +3,40 @@ package database
 import (
 	"fmt"
 
+	"github.com/OmidRasouli/amuse-park/models"
 	"github.com/OmidRasouli/amuse-park/statics"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var (
+type DatabaseHandler interface {
+	CreateAccount(account *models.Account) error
+	CreateAuthentication(authentication *models.Authentication) error
+}
+
+type RealDatabaseHandler struct {
 	DB *gorm.DB
+}
+
+func NewRealDatabaseHandler(db *gorm.DB) *RealDatabaseHandler {
+	return &RealDatabaseHandler{DB: db}
+}
+
+var (
+	DBHandler DatabaseHandler
 )
 
-func Initialize(postgresModels ...interface{}) {
-	var err error
-
+func Initialize(postgresModels ...interface{}) (*gorm.DB, error) {
 	dsn := config()
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		fmt.Println("Error connecting to PostgreSQL database:", err)
 	}
 
-	DB.AutoMigrate(postgresModels...)
+	db.AutoMigrate(postgresModels...)
+
+	DBHandler = NewRealDatabaseHandler(db)
+	return db, nil
 }
 
 func config() string {
