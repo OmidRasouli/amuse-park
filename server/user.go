@@ -50,16 +50,38 @@ func validateToken(signedToken string) (string, error) {
 type UserAccount struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
-	Token    string `json:"token"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func Register(c *gin.Context) {
 	var userAccount UserAccount
 
-	if err := c.ShouldBindJSON(&userAccount); err != nil {
+	err := c.ShouldBindJSON(&userAccount)
+	if err != nil {
 		c.String(http.StatusBadRequest, "bad request: %v", err)
 		return
 	}
+
+	account, err := createAccount(userAccount)
+
+	if err != nil {
+		log.Printf("this error occurred while creating an account: %v", err)
+		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)
+		return
+	}
+
+	log.Printf("New account \"%v\" add to database.", account.Username)
+
+	auth, err := CreateAuthentication(account, userAccount.Password)
+
+	if err != nil {
+		log.Printf("this error eccourred while creating an authentication: %v", err)
+		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)
+		return
+	}
+
+	log.Printf("New authentication \"%v\" add to database.", auth.Username)
 
 	token, err := generateToken(userAccount.UserID, time.Hour*100)
 	if err != nil {
@@ -68,6 +90,8 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	userAccount.Token = token
-	c.JSON(http.StatusOK, userAccount)
+	c.JSON(http.StatusOK, gin.H{
+		"account": account,
+		"token":   token,
+	})
 }
