@@ -23,7 +23,8 @@ func NewRealDatabaseHandler(db *gorm.DB) *RealDatabaseHandler {
 }
 
 var (
-	DBHandler DatabaseHandler
+	dbMigrator gorm.Migrator
+	dbHandler  DatabaseHandler
 )
 
 func Initialize(postgresModels ...interface{}) (*gorm.DB, error) {
@@ -34,8 +35,9 @@ func Initialize(postgresModels ...interface{}) (*gorm.DB, error) {
 	}
 
 	db.AutoMigrate(postgresModels...)
+	dbMigrator = db.Migrator()
 
-	DBHandler = NewRealDatabaseHandler(db)
+	dbHandler = NewRealDatabaseHandler(db)
 	return db, nil
 }
 
@@ -43,4 +45,12 @@ func config() string {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
 		statics.DBHost, statics.DBUser, statics.DBPassword, statics.DBName, statics.DBPort, statics.DBSSLMode, statics.DBTimeZone)
 	return dsn
+}
+
+func Migrator() gorm.Migrator {
+	return dbMigrator
+}
+
+func DBHandler() DatabaseHandler {
+	return dbHandler
 }
