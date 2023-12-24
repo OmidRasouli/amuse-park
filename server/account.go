@@ -32,7 +32,7 @@ func createAccount(userAccount UserAccount) (*models.Account, error) {
 		},
 	}
 
-	err = database.DBHandler.CreateAccount(&account)
+	err = database.DBHandler().CreateAccount(&account)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func CreateAuthentication(account *models.Account, password string) (*models.Aut
 		DeviceID: account.DeviceID,
 	}
 
-	err = database.DBHandler.CreateAuthentication(&authentication)
+	err = database.DBHandler().CreateAuthentication(&authentication)
 	if err != nil {
 		return nil, err
 	}
