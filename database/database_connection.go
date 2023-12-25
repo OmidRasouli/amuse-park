@@ -5,6 +5,7 @@ import (
 
 	"github.com/OmidRasouli/amuse-park/models"
 	"github.com/OmidRasouli/amuse-park/statics"
+	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -12,6 +13,8 @@ import (
 type DatabaseHandler interface {
 	CreateAccount(account *models.Account) error
 	CreateAuthentication(authentication *models.Authentication) error
+	GetProfile(uuid uuid.UUID) (*models.Profile, error)
+	UpdateProfile(existingProfile *models.Profile, updateProfile *models.Profile) error
 }
 
 type RealDatabaseHandler struct {

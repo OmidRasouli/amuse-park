@@ -7,7 +7,7 @@ import (
 )
 
 type Account struct {
-	UserID    uuid.UUID `gorm:"primaryKey;<-:create" json:"uuid"`
+	UserID    uuid.UUID `gorm:"primaryKey;<-:create" json:"user_id"`
 	Username  string    `json:"username"`
 	Role      string    `json:"role"`
 	ProfileID uuid.UUID `json:"profile_id"`
@@ -19,8 +19,8 @@ type Profile struct {
 	ID          uuid.UUID `gorm:"primaryKey;<-:create" json:"profile_id"`
 	Level       uint      `json:"level"`
 	DisplayName string    `json:"display_name"`
-	AvatarURL   *string   `json:"avatar_url"`
-	Location    *string   `json:"location"`
+	AvatarURL   string    `json:"avatar_url"`
+	Location    string    `json:"location"`
 	CreatedDate time.Time `gorm:"<-:create" json:"created_date"`
 	TimeZone    string    `json:"timezone"`
 	State       string    `json:"state"`

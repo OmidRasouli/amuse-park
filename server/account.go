@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/OmidRasouli/amuse-park/database"
@@ -37,6 +38,19 @@ func createAccount(userAccount *UserAccount) (*models.Account, error) {
 		return nil, err
 	}
 	return &account, nil
+}
+
+func updateProfile(profile models.Profile) error {
+	dbProfile, err := database.DBHandler().GetProfile(profile.ID)
+	if err != nil {
+		return fmt.Errorf("something occurred while getting profile: %v", err)
+	}
+
+	err = database.DBHandler().UpdateProfile(dbProfile, &profile)
+	if err != nil {
+		return fmt.Errorf("something occurred while updating profile: %v", err)
+	}
+	return nil
 }
 
 func CreateAuthentication(account *models.Account, password string) (*models.Authentication, error) {

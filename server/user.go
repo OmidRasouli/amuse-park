@@ -97,3 +97,47 @@ func Register(c *gin.Context) {
 		"token":   token,
 	})
 }
+
+func UpdateProfile(c *gin.Context) {
+	var profile models.Profile
+
+	authHeader := c.GetHeader("Authorization")
+	authHeaderParts := strings.Split(authHeader, " ")
+	if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	token := authHeaderParts[1]
+	userID, err := validateToken(token)
+
+	if err != nil {
+		c.String(http.StatusBadRequest, "bad request: %v", err)
+		return
+	}
+
+	err = c.ShouldBindJSON(&profile)
+	if err != nil {
+		c.String(http.StatusBadRequest, "bad request: %v", err)
+		return
+	}
+
+	if userID != profile.ID.String() {
+		log.Printf("user id: %v", userID)
+		log.Printf("user id: %v", profile.ID.String())
+		c.String(http.StatusUnauthorized, "invalid information")
+		return
+	}
+
+	if !common.IsValidEmail(profile.Email) {
+		c.String(http.StatusBadRequest, "email is not valid")
+	}
+
+	err = updateProfile(profile)
+	if err != nil {
+		c.String(http.StatusBadRequest, "bad request: %v", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}
