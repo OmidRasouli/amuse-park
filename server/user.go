@@ -4,8 +4,11 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/OmidRasouli/amuse-park/common"
+	"github.com/OmidRasouli/amuse-park/models"
 	"github.com/OmidRasouli/amuse-park/statics"
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/gin-gonic/gin"
@@ -43,7 +46,6 @@ func validateToken(signedToken string) (string, error) {
 	if !ok || !parsedToken.Valid {
 		return "", errors.New("invalid token")
 	}
-
 	return claims.UserID, nil
 }
 
@@ -63,7 +65,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	account, err := createAccount(userAccount)
+	account, err := createAccount(&userAccount)
 
 	if err != nil {
 		log.Printf("this error occurred while creating an account: %v", err)
@@ -83,7 +85,7 @@ func Register(c *gin.Context) {
 
 	log.Printf("New authentication \"%v\" add to database.", auth.Username)
 
-	token, err := generateToken(userAccount.UserID, time.Hour*100)
+	token, err := generateToken(account.UserID.String(), time.Hour*100)
 	if err != nil {
 		log.Printf("this error occurred while creating jwt: %v", err)
 		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)

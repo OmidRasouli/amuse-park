@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func createAccount(userAccount UserAccount) (*models.Account, error) {
+func createAccount(userAccount *UserAccount) (*models.Account, error) {
 	userID, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
