@@ -29,6 +29,26 @@ jobs:
       with:
         go-version: '1.20'
 
+    - name: Set up PostgreSQL
+      uses: docker-compose-action@v2
+      with:
+        services: |
+          postgres:
+            image: postgres:latest
+            env:
+              POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+              POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+            ports:
+              - ${{ secrets.POSTGRES_PORT }}:5432
+
+    - name: Wait for PostgreSQL to start
+      run: sleep 10
+
+    - name: Run Database Migrations
+      run: |
+        go run migrate.go
+
     - name: Run Tests
       run: go test -v ./...
       
