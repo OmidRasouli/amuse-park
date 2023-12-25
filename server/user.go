@@ -4,8 +4,11 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/OmidRasouli/amuse-park/common"
+	"github.com/OmidRasouli/amuse-park/models"
 	"github.com/OmidRasouli/amuse-park/statics"
 	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/gin-gonic/gin"
@@ -43,7 +46,6 @@ func validateToken(signedToken string) (string, error) {
 	if !ok || !parsedToken.Valid {
 		return "", errors.New("invalid token")
 	}
-
 	return claims.UserID, nil
 }
 
@@ -63,7 +65,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	account, err := createAccount(userAccount)
+	account, err := createAccount(&userAccount)
 
 	if err != nil {
 		log.Printf("this error occurred while creating an account: %v", err)
@@ -83,7 +85,7 @@ func Register(c *gin.Context) {
 
 	log.Printf("New authentication \"%v\" add to database.", auth.Username)
 
-	token, err := generateToken(userAccount.UserID, time.Hour*100)
+	token, err := generateToken(account.UserID.String(), time.Hour*100)
 	if err != nil {
 		log.Printf("this error occurred while creating jwt: %v", err)
 		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)
@@ -94,4 +96,48 @@ func Register(c *gin.Context) {
 		"account": account,
 		"token":   token,
 	})
+}
+
+func UpdateProfile(c *gin.Context) {
+	var profile models.Profile
+
+	authHeader := c.GetHeader("Authorization")
+	authHeaderParts := strings.Split(authHeader, " ")
+	if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		return
+	}
+
+	token := authHeaderParts[1]
+	userID, err := validateToken(token)
+
+	if err != nil {
+		c.String(http.StatusBadRequest, "bad request: %v", err)
+		return
+	}
+
+	err = c.ShouldBindJSON(&profile)
+	if err != nil {
+		c.String(http.StatusBadRequest, "bad request: %v", err)
+		return
+	}
+
+	if userID != profile.ID.String() {
+		log.Printf("user id: %v", userID)
+		log.Printf("user id: %v", profile.ID.String())
+		c.String(http.StatusUnauthorized, "invalid information")
+		return
+	}
+
+	if !common.IsValidEmail(profile.Email) {
+		c.String(http.StatusBadRequest, "email is not valid")
+	}
+
+	err = updateProfile(profile)
+	if err != nil {
+		c.String(http.StatusBadRequest, "bad request: %v", err)
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
 }
