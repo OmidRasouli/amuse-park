@@ -1,53 +1,14 @@
 package server
 
 import (
-	"errors"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/OmidRasouli/amuse-park/common"
 	"github.com/OmidRasouli/amuse-park/models"
-	"github.com/OmidRasouli/amuse-park/statics"
-	"github.com/dgrijalva/jwt-go/v4"
 	"github.com/gin-gonic/gin"
 )
-
-type JWTClaims struct {
-	UserID string `json:"user_id"`
-	jwt.StandardClaims
-}
-
-func generateToken(userID string, expireTime time.Duration) (string, error) {
-	claims := JWTClaims{
-		UserID: userID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: jwt.At(time.Now().Add(expireTime)),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(statics.SecretKey))
-	if err != nil {
-		return "", err
-	}
-	return signedToken, nil
-}
-
-func validateToken(signedToken string) (string, error) {
-	parsedToken, err := jwt.ParseWithClaims(signedToken, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(statics.SecretKey), nil
-	})
-	if err != nil {
-		return "", errors.New("invalid token")
-	}
-
-	claims, ok := parsedToken.Claims.(*JWTClaims)
-	if !ok || !parsedToken.Valid {
-		return "", errors.New("invalid token")
-	}
-	return claims.UserID, nil
-}
 
 type UserAccount struct {
 	UserID   string `json:"user_id"`
@@ -73,7 +34,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	log.Printf("New account \"%v\" add to database.", account.Username)
+	log.Printf("New account \"%v\" added to database.", account.Username)
 
 	auth, err := CreateAuthentication(account, userAccount.Password)
 
@@ -83,9 +44,9 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	log.Printf("New authentication \"%v\" add to database.", auth.Username)
+	log.Printf("New authentication \"%v\" added to database.", auth.Username)
 
-	token, err := generateToken(account.UserID.String(), time.Hour*100)
+	token, err := common.GenerateToken(account.UserID.String(), time.Hour*100)
 	if err != nil {
 		log.Printf("this error occurred while creating jwt: %v", err)
 		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)
@@ -101,19 +62,9 @@ func Register(c *gin.Context) {
 func UpdateProfile(c *gin.Context) {
 	var profile models.Profile
 
-	authHeader := c.GetHeader("Authorization")
-	authHeaderParts := strings.Split(authHeader, " ")
-	if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-		return
-	}
-
-	token := authHeaderParts[1]
-	userID, err := validateToken(token)
-
+	userID, err := common.Authentication(c.Request.Header)
 	if err != nil {
-		c.String(http.StatusBadRequest, "bad request: %v", err)
-		return
+		c.JSON(http.StatusUnauthorized, err)
 	}
 
 	err = c.ShouldBindJSON(&profile)
