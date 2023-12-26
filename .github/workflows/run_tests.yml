@@ -1,4 +1,4 @@
-name: Run Tests on Merge to Master
+name: Run Tests
 
 on:
   push:
@@ -51,11 +51,3 @@ jobs:
 
     - name: Run Tests
       run: go test -v ./...
-      
-    - name: Merge to main if tests pass
-      if: success()
-      run: |
-        git config user.name "GitHub Actions"
-        git config user.email "actions@github.com"
-        git merge ${{ github.event.before }} --no-ff --no-edit
-        git push
