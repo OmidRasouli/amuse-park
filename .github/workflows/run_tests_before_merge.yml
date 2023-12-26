@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     
     env:
-      SECRET_KEY: ${{ vars.SECRET_KEY }}
-      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
-      POSTGRES_USER: ${{ vars.POSTGRES_USER }}
+      SECRET_KEY: ${{ env.SECRET_KEY }}
+      POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
+      POSTGRES_USER: ${{ env.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ vars.POSTGRES_DB }}
       POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
