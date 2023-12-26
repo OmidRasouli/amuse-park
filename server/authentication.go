@@ -1,4 +1,4 @@
-package routing
+package server
 
 import (
 	"errors"
@@ -46,35 +46,46 @@ func validateJWTToken(signedToken string) (string, error) {
 	return claims.UserID, nil
 }
 
-func refreshToken(c *gin.Context) {
+func RefreshToken(c *gin.Context) {
 	account := struct {
 		UserID string `json:"user_id"`
 	}{}
 
 	err := c.ShouldBindJSON(&account)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err,
 		})
 	}
-
 	token, err := generateToken(account.UserID, time.Hour*100)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err,
 		})
 	}
 
-	c.Request.Header.Add("Authorization", "Bearer "+token)
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+	})
 }
 
-func authentication(c *gin.Context) {
+func refreshToken(userID string) (string, error) {
+	token, err := generateToken(userID, time.Hour*100)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func Authentication(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 	authHeaderParts := strings.Split(authHeader, " ")
 	if len(authHeaderParts) != 2 || authHeaderParts[0] != "Bearer" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "invalid token",
 		})
+		return
 	}
 
 	token := authHeaderParts[1]
@@ -82,6 +93,7 @@ func authentication(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "invalid token",
 		})
+		return
 	}
 
 	_, err := validateJWTToken(token)
@@ -89,5 +101,6 @@ func authentication(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": err,
 		})
+		return
 	}
 }

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -21,7 +22,14 @@ func Register(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&userAccount)
 	if err != nil {
-		c.String(http.StatusBadRequest, "bad request: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, fmt.Sprintf("bad request: %v", err))
+		return
+	}
+
+	token, err := refreshToken(userAccount.UserID)
+	if err != nil {
+		log.Printf("this error occurred while generating token: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, fmt.Sprintf("internal error occurred: %v", err))
 		return
 	}
 
@@ -29,7 +37,7 @@ func Register(c *gin.Context) {
 
 	if err != nil {
 		log.Printf("this error occurred while creating an account: %v", err)
-		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, fmt.Sprintf("internal error occurred: %v", err))
 		return
 	}
 
@@ -39,13 +47,11 @@ func Register(c *gin.Context) {
 
 	if err != nil {
 		log.Printf("this error eccourred while creating an authentication: %v", err)
-		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, fmt.Sprintf("internal error occurred: %v", err))
 		return
 	}
 
 	log.Printf("New authentication \"%v\" added to database.", auth.Username)
-
-	token := c.GetHeader("token")
 
 	c.JSON(http.StatusOK, gin.H{
 		"account": account,
@@ -58,17 +64,17 @@ func UpdateProfile(c *gin.Context) {
 
 	err := c.ShouldBindJSON(&profile)
 	if err != nil {
-		c.String(http.StatusBadRequest, "bad request: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, fmt.Sprintf("bad request: %v", err))
 		return
 	}
 
 	if !common.IsValidEmail(profile.Email) {
-		c.String(http.StatusBadRequest, "email is not valid")
+		c.AbortWithStatusJSON(http.StatusBadRequest, fmt.Sprintf("email is not valid"))
 	}
 
 	err = updateProfile(profile)
 	if err != nil {
-		c.String(http.StatusBadRequest, "bad request: %v", err)
+		c.AbortWithStatusJSON(http.StatusBadRequest, fmt.Sprintf("bad request: %v", err))
 		return
 	}
 

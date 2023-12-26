@@ -5,13 +5,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Initialize() {
+func Initialize() *gin.Engine {
 	router := gin.Default()
-	api := router.Group("/")
+
+	api := router.Group("/api/account")
 	{
-		api.POST("/register", refreshToken, server.Register)
-		api.POST("/update-profile", authentication, server.UpdateProfile)
+		api.POST("/refresh", server.RefreshToken)
+		api.POST("/register", server.Register)
+		api.POST("/update-profile", server.Authentication, server.UpdateProfile)
 	}
 
-	router.Run(":8080")
+	return router
 }

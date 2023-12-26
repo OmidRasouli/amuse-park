@@ -16,5 +16,5 @@ func main() {
 
 	fmt.Println("Hello there...")
 
-	routing.Initialize()
+	routing.Initialize().Run(":8080")
 }
