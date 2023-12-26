@@ -10,6 +10,7 @@ import (
 
 	"github.com/OmidRasouli/amuse-park/database"
 	"github.com/OmidRasouli/amuse-park/models"
+	"github.com/OmidRasouli/amuse-park/routing"
 	"github.com/OmidRasouli/amuse-park/server"
 	"github.com/OmidRasouli/amuse-park/statics"
 	"github.com/gin-gonic/gin"
@@ -29,17 +30,8 @@ type RegisterResult struct {
 
 var (
 	testUserAccount server.UserAccount
+	route           *gin.Engine
 )
-
-func router() *gin.Engine {
-	router := gin.Default()
-
-	publicRoutes := router.Group("/")
-	publicRoutes.POST("/register", server.Register)
-	publicRoutes.POST("/update-profile", server.UpdateProfile)
-
-	return router
-}
 
 func makeRequest(method, url string, body interface{}, isAuthenticatedRequest bool, token string) *httptest.ResponseRecorder {
 	requestBody, _ := json.Marshal(body)
@@ -48,7 +40,7 @@ func makeRequest(method, url string, body interface{}, isAuthenticatedRequest bo
 		request.Header.Add("Authorization", "Bearer "+token)
 	}
 	writer := httptest.NewRecorder()
-	router().ServeHTTP(writer, request)
+	route.ServeHTTP(writer, request)
 	return writer
 }
 
@@ -59,7 +51,7 @@ func TestSuite(t *testing.T) {
 func (suite *testSuite) SetupSuite() {
 	gin.SetMode(gin.TestMode)
 	statics.Read()
-	router()
+	route = routing.Initialize()
 	database.Initialize(&models.Account{}, &models.Authentication{}, &models.Profile{})
 }
 
@@ -78,7 +70,7 @@ func (suite *testSuite) TestRegister() {
 		Email:    "test@example.com",
 		Password: "testpassword",
 	}
-	response := makeRequest("POST", "/register", testUser, false, "")
+	response := makeRequest("POST", "/api/account/register", testUser, false, "")
 	assert.Equal(suite.T(), http.StatusOK, response.Code)
 
 	var registerResult RegisterResult
@@ -94,7 +86,7 @@ func (suite *testSuite) TestRegister() {
 	log.Printf("=====================================")
 	log.Printf("🧪 Login without authentication tests started")
 	invalidUpdatedProfileData := &models.Profile{}
-	responseInvalidProfile := makeRequest("POST", "/update-profile", invalidUpdatedProfileData, false, "")
+	responseInvalidProfile := makeRequest("POST", "/api/account/update-profile", invalidUpdatedProfileData, false, "")
 	assert.Equal(suite.T(), http.StatusUnauthorized, responseInvalidProfile.Code)
 	log.Printf("✅ Login without authentication tests passed")
 
@@ -112,7 +104,7 @@ func (suite *testSuite) TestRegister() {
 		Email:       "updated_email@example.com",
 	}
 
-	responseUpdateProfile := makeRequest("POST", "/update-profile", updatedProfile, true, token)
+	responseUpdateProfile := makeRequest("POST", "/api/account/update-profile", updatedProfile, true, token)
 	assert.Equal(suite.T(), http.StatusOK, responseUpdateProfile.Code)
 
 	var updateProfile models.Profile
