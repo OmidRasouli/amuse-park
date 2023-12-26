@@ -3,12 +3,14 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/OmidRasouli/amuse-park/database"
 	"github.com/OmidRasouli/amuse-park/models"
+	"github.com/OmidRasouli/amuse-park/routing"
 	"github.com/OmidRasouli/amuse-park/server"
 	"github.com/OmidRasouli/amuse-park/statics"
 	"github.com/gin-gonic/gin"
@@ -28,27 +30,17 @@ type RegisterResult struct {
 
 var (
 	testUserAccount server.UserAccount
-	token           string
+	route           *gin.Engine
 )
 
-func router() *gin.Engine {
-	router := gin.Default()
-
-	publicRoutes := router.Group("/")
-	publicRoutes.POST("/register", server.Register)
-	publicRoutes.POST("/update-profile", server.UpdateProfile)
-
-	return router
-}
-
-func makeRequest(method, url string, body interface{}, isAuthenticatedRequest bool) *httptest.ResponseRecorder {
+func makeRequest(method, url string, body interface{}, isAuthenticatedRequest bool, token string) *httptest.ResponseRecorder {
 	requestBody, _ := json.Marshal(body)
 	request, _ := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
 	if isAuthenticatedRequest {
 		request.Header.Add("Authorization", "Bearer "+token)
 	}
 	writer := httptest.NewRecorder()
-	router().ServeHTTP(writer, request)
+	route.ServeHTTP(writer, request)
 	return writer
 }
 
@@ -59,7 +51,7 @@ func TestSuite(t *testing.T) {
 func (suite *testSuite) SetupSuite() {
 	gin.SetMode(gin.TestMode)
 	statics.Read()
-	router()
+	route = routing.Initialize()
 	database.Initialize(&models.Account{}, &models.Authentication{}, &models.Profile{})
 }
 
@@ -71,25 +63,35 @@ func (suite *testSuite) TearDownSuite() {
 }
 
 func (suite *testSuite) TestRegister() {
+	log.Printf("=====================================")
+	log.Printf("🧪 Regiser tests started")
 	testUser := server.UserAccount{
 		Username: "testuser",
 		Email:    "test@example.com",
 		Password: "testpassword",
 	}
-	response := makeRequest("POST", "/register", testUser, false)
+	response := makeRequest("POST", "/api/account/register", testUser, false, "")
 	assert.Equal(suite.T(), http.StatusOK, response.Code)
 
 	var registerResult RegisterResult
 	err := json.Unmarshal(response.Body.Bytes(), &registerResult)
 	assert.NoError(suite.T(), err, "Failed to unmarshal response JSON")
 
-	token = registerResult.Token
+	token := registerResult.Token
 
 	assert.Equal(suite.T(), testUser.Username, registerResult.Account.Username)
 	testUserAccount.UserID = registerResult.Account.UserID
-}
+	log.Printf("✅ Register tests passed")
 
-func (suite *testSuite) TestUpdateProfile() {
+	log.Printf("=====================================")
+	log.Printf("🧪 Login without authentication tests started")
+	invalidUpdatedProfileData := &models.Profile{}
+	responseInvalidProfile := makeRequest("POST", "/api/account/update-profile", invalidUpdatedProfileData, false, "")
+	assert.Equal(suite.T(), http.StatusUnauthorized, responseInvalidProfile.Code)
+	log.Printf("✅ Login without authentication tests passed")
+
+	log.Printf("=====================================")
+	log.Printf("🧪 Login with authentication tests started")
 	userID := uuid.MustParse(testUserAccount.UserID)
 	updatedProfile := models.Profile{
 		ID:          userID,
@@ -102,11 +104,11 @@ func (suite *testSuite) TestUpdateProfile() {
 		Email:       "updated_email@example.com",
 	}
 
-	response := makeRequest("POST", "/update-profile", updatedProfile, true)
-	assert.Equal(suite.T(), http.StatusOK, response.Code)
+	responseUpdateProfile := makeRequest("POST", "/api/account/update-profile", updatedProfile, true, token)
+	assert.Equal(suite.T(), http.StatusOK, responseUpdateProfile.Code)
 
 	var updateProfile models.Profile
-	err := json.Unmarshal(response.Body.Bytes(), &updateProfile)
+	err = json.Unmarshal(responseUpdateProfile.Body.Bytes(), &updateProfile)
 	assert.NoError(suite.T(), err, "Failed to unmarshal response JSON")
 
 	assert.Equal(suite.T(), updatedProfile.Level, updateProfile.Level)
@@ -116,4 +118,5 @@ func (suite *testSuite) TestUpdateProfile() {
 	assert.Equal(suite.T(), updatedProfile.TimeZone, updateProfile.TimeZone)
 	assert.Equal(suite.T(), updatedProfile.State, updateProfile.State)
 	assert.Equal(suite.T(), updatedProfile.Email, updateProfile.Email)
+	log.Printf("✅ Login with authentication tests passed")
 }
