@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: secrets
     env:
-      SECRET_KEY: ${{ vars.SECRET_KEY }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
       POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
       POSTGRES_USER: ${{ vars.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ vars.POSTGRES_PASSWORD }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_DB: ${{ vars.POSTGRES_DB }}
       POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
       SSLMODE: ${{ vars.SSLMODE }}
