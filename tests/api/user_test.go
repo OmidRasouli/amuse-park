@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,7 +29,6 @@ type RegisterResult struct {
 
 var (
 	testUserAccount server.UserAccount
-	token           string
 )
 
 func router() *gin.Engine {
@@ -41,7 +41,7 @@ func router() *gin.Engine {
 	return router
 }
 
-func makeRequest(method, url string, body interface{}, isAuthenticatedRequest bool) *httptest.ResponseRecorder {
+func makeRequest(method, url string, body interface{}, isAuthenticatedRequest bool, token string) *httptest.ResponseRecorder {
 	requestBody, _ := json.Marshal(body)
 	request, _ := http.NewRequest(method, url, bytes.NewBuffer(requestBody))
 	if isAuthenticatedRequest {
@@ -71,31 +71,35 @@ func (suite *testSuite) TearDownSuite() {
 }
 
 func (suite *testSuite) TestRegister() {
+	log.Printf("=====================================")
+	log.Printf("🧪 Regiser tests started")
 	testUser := server.UserAccount{
 		Username: "testuser",
 		Email:    "test@example.com",
 		Password: "testpassword",
 	}
-	response := makeRequest("POST", "/register", testUser, false)
+	response := makeRequest("POST", "/register", testUser, false, "")
 	assert.Equal(suite.T(), http.StatusOK, response.Code)
 
 	var registerResult RegisterResult
 	err := json.Unmarshal(response.Body.Bytes(), &registerResult)
 	assert.NoError(suite.T(), err, "Failed to unmarshal response JSON")
 
-	token = registerResult.Token
+	token := registerResult.Token
 
 	assert.Equal(suite.T(), testUser.Username, registerResult.Account.Username)
 	testUserAccount.UserID = registerResult.Account.UserID
-}
+	log.Printf("✅ Register tests passed")
 
-func (suite *testSuite) TestNoLoggedIn() {
-	updatedProfile := &models.Profile{}
-	response := makeRequest("POST", "/update-profile", updatedProfile, false)
-	assert.Equal(suite.T(), http.StatusUnauthorized, response.Code)
-}
+	log.Printf("=====================================")
+	log.Printf("🧪 Login without authentication tests started")
+	invalidUpdatedProfileData := &models.Profile{}
+	responseInvalidProfile := makeRequest("POST", "/update-profile", invalidUpdatedProfileData, false, "")
+	assert.Equal(suite.T(), http.StatusUnauthorized, responseInvalidProfile.Code)
+	log.Printf("✅ Login without authentication tests passed")
 
-func (suite *testSuite) TestUpdateProfile() {
+	log.Printf("=====================================")
+	log.Printf("🧪 Login with authentication tests started")
 	userID := uuid.MustParse(testUserAccount.UserID)
 	updatedProfile := models.Profile{
 		ID:          userID,
@@ -108,11 +112,11 @@ func (suite *testSuite) TestUpdateProfile() {
 		Email:       "updated_email@example.com",
 	}
 
-	response := makeRequest("POST", "/update-profile", updatedProfile, true)
-	assert.Equal(suite.T(), http.StatusOK, response.Code)
+	responseUpdateProfile := makeRequest("POST", "/update-profile", updatedProfile, true, token)
+	assert.Equal(suite.T(), http.StatusOK, responseUpdateProfile.Code)
 
 	var updateProfile models.Profile
-	err := json.Unmarshal(response.Body.Bytes(), &updateProfile)
+	err = json.Unmarshal(responseUpdateProfile.Body.Bytes(), &updateProfile)
 	assert.NoError(suite.T(), err, "Failed to unmarshal response JSON")
 
 	assert.Equal(suite.T(), updatedProfile.Level, updateProfile.Level)
@@ -122,4 +126,5 @@ func (suite *testSuite) TestUpdateProfile() {
 	assert.Equal(suite.T(), updatedProfile.TimeZone, updateProfile.TimeZone)
 	assert.Equal(suite.T(), updatedProfile.State, updateProfile.State)
 	assert.Equal(suite.T(), updatedProfile.Email, updateProfile.Email)
+	log.Printf("✅ Login with authentication tests passed")
 }

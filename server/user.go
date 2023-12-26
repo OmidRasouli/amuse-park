@@ -3,7 +3,6 @@ package server
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/OmidRasouli/amuse-park/common"
 	"github.com/OmidRasouli/amuse-park/models"
@@ -46,12 +45,7 @@ func Register(c *gin.Context) {
 
 	log.Printf("New authentication \"%v\" added to database.", auth.Username)
 
-	token, err := common.GenerateToken(account.UserID.String(), time.Hour*100)
-	if err != nil {
-		log.Printf("this error occurred while creating jwt: %v", err)
-		c.String(http.StatusInternalServerError, "internal error occurred: %v", err)
-		return
-	}
+	token := c.GetHeader("token")
 
 	c.JSON(http.StatusOK, gin.H{
 		"account": account,
@@ -62,21 +56,9 @@ func Register(c *gin.Context) {
 func UpdateProfile(c *gin.Context) {
 	var profile models.Profile
 
-	userID, err := common.Authentication(c.Request.Header)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, err)
-	}
-
-	err = c.ShouldBindJSON(&profile)
+	err := c.ShouldBindJSON(&profile)
 	if err != nil {
 		c.String(http.StatusBadRequest, "bad request: %v", err)
-		return
-	}
-
-	if userID != profile.ID.String() {
-		log.Printf("user id: %v", userID)
-		log.Printf("user id: %v", profile.ID.String())
-		c.String(http.StatusUnauthorized, "invalid information")
 		return
 	}
 
