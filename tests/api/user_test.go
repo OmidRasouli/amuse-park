@@ -89,6 +89,12 @@ func (suite *testSuite) TestRegister() {
 	testUserAccount.UserID = registerResult.Account.UserID
 }
 
+func (suite *testSuite) TestNoLoggedIn() {
+	updatedProfile := &models.Profile{}
+	response := makeRequest("POST", "/update-profile", updatedProfile, false)
+	assert.Equal(suite.T(), http.StatusUnauthorized, response.Code)
+}
+
 func (suite *testSuite) TestUpdateProfile() {
 	userID := uuid.MustParse(testUserAccount.UserID)
 	updatedProfile := models.Profile{
