@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
 )
@@ -29,14 +28,9 @@ func StartGameRequest(player Player) {
 	waitingQueue = append(waitingQueue, player)
 	if len(waitingQueue) == maxPlayerInRoom {
 
-		log.Printf("players in waiting queue: %v", waitingQueue[:maxPlayerInRoom])
 		createRoom(waitingQueue[:maxPlayerInRoom]...)
-		log.Printf("players in waiting queue again: %v", waitingQueue)
 		inGameQueue = append(inGameQueue, waitingQueue[:maxPlayerInRoom]...)
-		log.Printf("playersin in game queue: %v", inGameQueue)
-		log.Printf("playersin waiting queue before the end: %v", waitingQueue)
 		waitingQueue = waitingQueue[maxPlayerInRoom:]
-		log.Printf("playersin waiting queue at the end: %v", waitingQueue)
 	}
 }
 
@@ -46,13 +40,11 @@ func createRoom(players ...Player) {
 		Players: players,
 	}
 	rooms = append(rooms, newRoom)
-	fmt.Println("Room created with players:", players)
 	matchmaking(newRoom)
 }
 
 func matchmaking(room Room) {
 	startMatch(room)
-	fmt.Printf("remainig players in queue: %v", waitingQueue)
 }
 
 func startMatch(room Room) {
