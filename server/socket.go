@@ -25,9 +25,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
-	defer conn.Close()
 
 	for {
 		messageType, p, err := conn.ReadMessage()
