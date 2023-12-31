@@ -6,6 +6,7 @@ import (
 	"github.com/OmidRasouli/amuse-park/database"
 	"github.com/OmidRasouli/amuse-park/models"
 	"github.com/OmidRasouli/amuse-park/routing"
+	"github.com/OmidRasouli/amuse-park/server"
 	"github.com/OmidRasouli/amuse-park/statics"
 )
 
@@ -16,5 +17,6 @@ func main() {
 
 	fmt.Println("Hello there...")
 
-	routing.Initialize().Run(":8080")
+	server.StartSocket()
+	routing.Initialize().Run(":8081")
 }
